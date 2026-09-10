@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gap Fill Exercise B2</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  }
+  h1 {
+    color: #4a3f8f;
+    text-align: center;
+    margin: 0 0 25px 0;
+    font-size: 24px;
+  }
+  .wordbank {
+    background: #f0f4ff;
+    border: 2px dashed #667eea;
+    border-radius: 12px;
+    padding: 15px 20px;
+    margin-bottom: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    min-height: 60px;
+  }
+  .chip {
+    background: #667eea;
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: grab;
+    user-select: none;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+    box-shadow: 0 2px 6px rgba(102,126,234,0.4);
+  }
+  .chip:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(102,126,234,0.5);
+  }
+  .chip:active { cursor: grabbing; }
+  .chip.dragging { opacity: 0.4; }
+  .chip.used {
+    background: #ccc;
+    box-shadow: none;
+    cursor: default;
+    opacity: 0.5;
+  }
+  .chip.correct { background: #28a745; box-shadow: 0 2px 6px rgba(40,167,69,0.4); }
+  .chip.wrong { background: #dc3545; box-shadow: 0 2px 6px rgba(220,53,69,0.4); }
+
+  .sentence {
+    margin-bottom: 16px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #333;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px 15px;
+    border-radius: 10px;
+    background: #fafafa;
+    transition: background 0.3s;
+  }
+  .sentence.correct { background: #e6f9ec; }
+  .sentence.wrong { background: #ffeaea; }
+  .num {
+    font-weight: bold;
+    color: #764ba2;
+    min-width: 22px;
+  }
+  .dropzone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 170px;
+    min-height: 40px;
+    padding: 4px 10px;
+    border: 2px dashed #bbb;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 15px;
+    color: #333;
+    transition: border-color 0.2s, background 0.2s;
+    vertical-align: middle;
+  }
+  .dropzone.over {
+    border-color: #667eea;
+    background: #eef1ff;
+  }
+  .dropzone.filled {
+    border-style: solid;
+    border-color: #667eea;
+    background: #f0f4ff;
+    cursor: pointer;
+  }
+  .dropzone.correct {
+    border-color: #28a745;
+    background: #e6f9ec;
+  }
+  .dropzone.wrong {
+    border-color: #dc3545;
+    background: #ffeaea;
+  }
+  .dropzone .chip { margin: 0; }
+  .feedback {
+    font-size: 20px;
+    min-width: 24px;
+    text-align: center;
+  }
+  .buttons {
+    text-align: center;
+    margin-top: 25px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  button {
+    padding: 12px 28px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-family: inherit;
+  }
+  button:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
+  button:active { transform: translateY(0); }
+  .check-btn { background: #667eea; color: #fff; }
+  .reset-btn { background: #eee; color: #555; }
+  .score {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 20px;
+    color: #4a3f8f;
+    min-height: 28px;
+  }
+  .hint {
+    font-size: 13px;
+    color: #999;
+    text-align: center;
+    margin-top: 15px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>✏️ Gap Fill Exercise</h1>
+
+  <div class="wordbank" id="wordbank"></div>
+
+  <div id="quiz"></div>
+
+  <div class="buttons">
+    <button class="check-btn" onclick="checkAnswers()">✅ Проверить</button>
+    <button class="reset-btn" onclick="resetQuiz()">🔄 Сбросить</button>
+  </div>
+
+  <div class="score" id="score"></div>
+  <p class="hint">Перетащи плашку в пропуск. Чтобы вернуть — кликни по ней в пропуске.</p>
+</div>
+
+<script>
+const questions = [
+  {
+    before: "I know you don't like him, but could you",
+    after: "and just be polite for one evening?",
+    answer: "do me a favour"
+  },
+  {
+    before: "She's been",
+    after: "her husband for almost twenty years, and they still seem very happy together.",
+    answer: "married to smb"
+  },
+  {
+    before: "",
+    after: "he's only sixteen, he's already started his own online business.",
+    answer: "although"
+  },
+  {
+    before: "My little brother and I didn't use to",
+    after: "each other, but now we're best friends.",
+    answer: "get on well with"
+  },
+  {
+    before: "Learning to manage your own money is",
+    after: "on the way to becoming independent.",
+    answer: "take an important step"
+  },
+  {
+    before: "You can't always",
+    after: "your parents for money — at some point you'll have to earn your own.",
+    answer: "depend on"
+  },
+  {
+    before: "It's freezing outside! Don't forget to put on your",
+    after: "before you leave.",
+    answer: "gloves"
+  },
+  {
+    before: "He invested in some crazy cryptocurrency and managed to",
+    after: "in just one year.",
+    answer: "make a fortune"
+  },
+  {
+    before: "Have you",
+    after: "the new song by that band? It's everywhere right now.",
+    answer: "heard"
+  },
+  {
+    before: "",
+    after: ", I think social media does more harm than good for teenagers.",
+    answer: "in general"
+  }
+];
+
+// Alternate accepted forms (нормализация для проверки)
+const altAnswers = {
+  "do me a favour": ["do me a favour", "do me a favor"],
+  "married to smb": ["married to smb", "married to somebody", "married to someone", "married to"],
+  "take an important step": ["take an important step", "an important step", "take an important step"]
+};
+
+const wordbank = document.getElementById('wordbank');
+const quizDiv = document.getElementById('quiz');
+
+// Перемешанный порядок плашек
+let chipsOrder = [];
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildChips() {
+  wordbank.innerHTML = '';
+  chipsOrder.forEach(word => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = word;
+    chip.draggable = true;
+    chip.dataset.word = word;
+    chip.id = 'chip-' + word.replace(/\s+/g, '_');
+    chip.addEventListener('dragstart', handleDragStart);
+    chip.addEventListener('dragend', handleDragEnd);
+    wordbank.appendChild(chip);
+  });
+}
+
+function buildQuiz() {
+  quizDiv.innerHTML = '';
+  questions.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'sentence';
+    div.id = 'sentence-' + i;
+
+    const num = document.createElement('span');
+    num.className = 'num';
+    num.textContent = (i + 1) + '.';
+
+    div.appendChild(num);
+
+    if (q.before) {
+      div.appendChild(document.createTextNode(' ' + q.before + ' '));
+    }
+
+    const zone = document.createElement('div');
+    zone.className = 'dropzone';
+    zone.id = 'zone-' + i;
+    zone.dataset.index = i;
+    zone.addEventListener('dragover', handleDragOver);
+    zone.addEventListener('dragleave', handleDragLeave);
+    zone.addEventListener('drop', handleDrop);
+    zone.addEventListener('click', handleZoneClick);
+
+    div.appendChild(zone);
+
+    if (q.after) {
+      div.appendChild(document.createTextNode(' ' + q.after));
+    }
+
+    const feedback = document.createElement('span');
+    feedback.className = 'feedback';
+    feedback.id = 'feedback-' + i;
+    div.appendChild(feedback);
+
+    quizDiv.appendChild(div);
+  });
+}
+
+let draggedChip = null;
+
+function handleDragStart(e) {
+  if (this.classList.contains('used')) {
+    e.preventDefault();
+    return;
+  }
+  draggedChip = this;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', this.dataset.word);
+}
+
+function handleDragEnd(e) {
+  this.classList.remove('dragging');
+  draggedChip = null;
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  this.classList.add('over');
+}
+
+function handleDragLeave(e) {
+  this.classList.remove('over');
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  this.classList.remove('over');
+  if (!draggedChip) return;
+
+  const word = draggedChip.dataset.word;
+  placeChipInZone(this, word);
+}
+
+function placeChipInZone(zone, word) {
+  // Если в зоне уже что-то есть — вернём в банк
+  if (zone.dataset.filled) {
+    returnToBank(zone.dataset.filled);
+  }
+
+  const chip = document.getElementById('chip-' + word.replace(/\s+/g, '_'));
+  if (!chip) return;
+
+  chip.classList.add('used');
+  chip.draggable = false;
+
+  const clone = chip.cloneNode(true);
+  clone.classList.remove('used');
+  clone.classList.add('placed');
+  clone.draggable = false;
+  clone.removeAttribute('id');
+  clone.style.cursor = 'pointer';
+
+  zone.innerHTML = '';
+  zone.appendChild(clone);
+  zone.classList.add('filled');
+  zone.dataset.filled = word;
+}
+
+function returnToBank(word) {
+  const chip = document.getElementById('chip-' + word.replace(/\s+/g, '_'));
+  if (chip) {
+    chip.classList.remove('used');
+    chip.draggable = true;
+  }
+}
+
+function handleZoneClick(e) {
+  if (!this.dataset.filled) return;
+  const word = this.dataset.filled;
+  returnToBank(word);
+  this.innerHTML = '';
+  this.classList.remove('filled', 'correct', 'wrong');
+  delete this.dataset.filled;
+
+  const i = this.dataset.index;
+  document.getElementById('sentence-' + i).classList.remove('correct', 'wrong');
+  document.getElementById('feedback-' + i).textContent = '';
+}
+
+function normalize(str) {
+  return str.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[.,!?;:]/g, '');
+}
+
+function isAnswerCorrect(userAnswer, correctAnswer) {
+  const normUser = normalize(userAnswer);
+  const accepted = altAnswers[correctAnswer] || [correctAnswer];
+  return accepted.some(a => normalize(a) === normUser);
+}
+
+function checkAnswers() {
+  let correct = 0;
+  questions.forEach((q, i) => {
+    const zone = document.getElementById('zone-' + i);
+    const sentence = document.getElementById('sentence-' + i);
+    const feedback = document.getElementById('feedback-' + i);
+
+    sentence.classList.remove('correct', 'wrong');
+    zone.classList.remove('correct', 'wrong');
+    feedback.textContent = '';
+
+    const placed = zone.dataset.filled;
+
+    if (!placed) {
+      feedback.textContent = '⬜';
+      return;
+    }
+
+    if (isAnswerCorrect(placed, q.answer)) {
+      correct++;
+      sentence.classList.add('correct');
+      zone.classList.add('correct');
+      feedback.textContent = '✅';
+    } else {
+      sentence.classList.add('wrong');
+      zone.classList.add('wrong');
+      feedback.textContent = '❌';
+    }
+  });
+
+  const scoreDiv = document.getElementById('score');
+  const total = questions.length;
+  let emoji = '📚';
+  if (correct === total) emoji = '🏆';
+  else if (correct >= total * 0.8) emoji = '🌟';
+  else if (correct >= total * 0.5) emoji = '👍';
+  scoreDiv.textContent = `${emoji} Результат: ${correct} / ${total}`;
+}
+
+function resetQuiz() {
+  // Очистить зоны
+  questions.forEach((q, i) => {
+    const zone = document.getElementById('zone-' + i);
+    zone.innerHTML = '';
+    zone.classList.remove('filled', 'correct', 'wrong', 'over');
+    delete zone.dataset.filled;
+
+    document.getElementById('sentence-' + i).classList.remove('correct', 'wrong');
+    document.getElementById('feedback-' + i).textContent = '';
+  });
+  // Вернуть все плашки в банк в перемешанном порядке
+  chipsOrder = shuffle(questions.map(q => q.answer));
+  buildChips();
+  document.getElementById('score').textContent = '';
+}
+
+// Инициализация
+chipsOrder = shuffle(questions.map(q => q.answer));
+buildChips();
+buildQuiz();
+</script>
+</body>
+</html>
