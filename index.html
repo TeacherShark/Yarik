@@ -28,6 +28,9 @@
     font-size: 24px;
   }
   .wordbank {
+    position: sticky;
+    top: 0;
+    z-index: 100;
     background: #f0f4ff;
     border: 2px dashed #667eea;
     border-radius: 12px;
@@ -38,6 +41,8 @@
     gap: 10px;
     justify-content: center;
     min-height: 60px;
+    box-shadow: 0 6px 18px rgba(102,126,234,0.25);
+    transition: box-shadow 0.2s;
   }
   .chip {
     background: #667eea;
@@ -162,6 +167,17 @@
     text-align: center;
     margin-top: 15px;
   }
+
+  /* Адаптация для мобильных и планшетов */
+  @media (max-width: 600px) {
+    body { padding: 10px; }
+    .container { padding: 18px; border-radius: 12px; }
+    h1 { font-size: 20px; }
+    .wordbank { padding: 12px; gap: 8px; }
+    .chip { font-size: 13px; padding: 6px 11px; }
+    .sentence { font-size: 15px; padding: 10px 12px; }
+    .dropzone { min-width: 130px; }
+  }
 </style>
 </head>
 <body>
@@ -235,17 +251,15 @@ const questions = [
   }
 ];
 
-// Alternate accepted forms (нормализация для проверки)
 const altAnswers = {
   "do me a favour": ["do me a favour", "do me a favor"],
   "married to smb": ["married to smb", "married to somebody", "married to someone", "married to"],
-  "take an important step": ["take an important step", "an important step", "take an important step"]
+  "take an important step": ["take an important step", "an important step"]
 };
 
 const wordbank = document.getElementById('wordbank');
 const quizDiv = document.getElementById('quiz');
 
-// Перемешанный порядок плашек
 let chipsOrder = [];
 
 function shuffle(arr) {
@@ -351,7 +365,6 @@ function handleDrop(e) {
 }
 
 function placeChipInZone(zone, word) {
-  // Если в зоне уже что-то есть — вернём в банк
   if (zone.dataset.filled) {
     returnToBank(zone.dataset.filled);
   }
@@ -446,7 +459,6 @@ function checkAnswers() {
 }
 
 function resetQuiz() {
-  // Очистить зоны
   questions.forEach((q, i) => {
     const zone = document.getElementById('zone-' + i);
     zone.innerHTML = '';
@@ -456,13 +468,11 @@ function resetQuiz() {
     document.getElementById('sentence-' + i).classList.remove('correct', 'wrong');
     document.getElementById('feedback-' + i).textContent = '';
   });
-  // Вернуть все плашки в банк в перемешанном порядке
   chipsOrder = shuffle(questions.map(q => q.answer));
   buildChips();
   document.getElementById('score').textContent = '';
 }
 
-// Инициализация
 chipsOrder = shuffle(questions.map(q => q.answer));
 buildChips();
 buildQuiz();
